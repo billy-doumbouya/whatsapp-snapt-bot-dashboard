@@ -12,16 +12,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Rediriger vers /login si 401
+// Gérer les réponses en erreur
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    // Si l'erreur est un 401, on nettoie juste le token expiré localement
     if (err.response?.status === 401) {
       localStorage.removeItem("token");
-      window.location.href = "/login";
+
+      // OPTIONNEL : Si tu veux vraiment forcer la redirection depuis ici sans tout casser,
+      // utilise l'historique de ton routeur ou vérifie qu'on n'est pas déjà sur /login
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(err);
-  }
+  },
 );
 
 export default api;

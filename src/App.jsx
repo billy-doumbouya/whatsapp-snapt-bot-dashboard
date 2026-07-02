@@ -11,14 +11,23 @@ import SettingsPage from "./pages/dashboard/SettingsPage.jsx";
 import AdminPage from "./pages/dashboard/AdminPage.jsx";
 import LogsPage from "./pages/dashboard/LogsPage.jsx";
 
+// Route privée : exige un utilisateur connecté
 const PrivateRoute = ({ children }) => {
-  const { token, loading } = useAuthStore();
+  const { user, loading } = useAuthStore();
+
+  // Bloque l'évaluation tant que fetchMe n'a pas rendu son verdict
   if (loading) return <div className="empty">Chargement…</div>;
-  return token ? children : <Navigate to="/login" replace />;
+
+  // Si le chargement est fini et qu'aucun utilisateur n'est récupéré -> Login
+  return user ? children : <Navigate to="/login" replace />;
 };
 
+// Route Admin : exige un rôle admin ET attend la fin du chargement global
 const AdminRoute = ({ children }) => {
-  const { user } = useAuthStore();
+  const { user, loading } = useAuthStore();
+
+  if (loading) return <div className="empty">Chargement…</div>;
+
   return user?.role === "admin" ? children : <Navigate to="/" replace />;
 };
 
@@ -44,6 +53,7 @@ export default function App() {
       />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+
         <Route
           path="/"
           element={
@@ -66,6 +76,7 @@ export default function App() {
             }
           />
         </Route>
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

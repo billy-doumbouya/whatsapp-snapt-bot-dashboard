@@ -11,6 +11,7 @@ export const useSocket = () => {
   useEffect(() => {
     if (!token || !user) return;
 
+    // Nettoyage de l'URL au cas où elle se termine par /api
     const socket = io(import.meta.env.VITE_API_URL?.replace("/api", "") || "", {
       auth: { token },
     });
@@ -23,7 +24,15 @@ export const useSocket = () => {
 
     socket.on("wa:status", ({ status }) => {
       setWaStatus(status);
-      if (status === "connected") setQrCode(null);
+      // ✅ Sécurité : On vire le QR code dès que l'authentification commence
+      // ou que le client est connecté pour éviter les artéfacts visuels.
+      if (
+        status === "connected" ||
+        status === "authenticated" ||
+        status === "loading"
+      ) {
+        setQrCode(null);
+      }
     });
 
     socket.on("wa:qr", ({ qr }) => {

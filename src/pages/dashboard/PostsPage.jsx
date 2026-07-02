@@ -4,8 +4,18 @@ import { Wand2, Send, Trash2, Loader, Edit2, X, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../services/api.js";
 
-const statusBadge = { published: "badge-green", scheduled: "badge-blue", draft: "badge-gray", failed: "badge-red" };
-const statusLabel = { published: "Publié", scheduled: "Schedulé", draft: "Brouillon", failed: "Échoué" };
+const statusBadge = {
+  published: "badge-green",
+  scheduled: "badge-blue",
+  draft: "badge-gray",
+  failed: "badge-red",
+};
+const statusLabel = {
+  published: "Publié",
+  scheduled: "Schedulé",
+  draft: "Brouillon",
+  failed: "Échoué",
+};
 
 export default function PostsPage() {
   const [posts, setPosts] = useState([]);
@@ -25,7 +35,9 @@ export default function PostsPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -77,7 +89,12 @@ export default function PostsPage() {
     }
   };
 
-  if (loading) return <div className="empty"><Loader size={24} className="spin" /></div>;
+  if (loading)
+    return (
+      <div className="empty">
+        <Loader size={24} className="spin" />
+      </div>
+    );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -86,8 +103,16 @@ export default function PostsPage() {
           <h1 className="page-title">Publications</h1>
           <p className="page-sub">{posts.length} posts au total</p>
         </div>
-        <button className="btn btn-primary" onClick={handleGenerate} disabled={generating}>
-          {generating ? <Loader size={15} className="spin" /> : <Wand2 size={15} />}
+        <button
+          className="btn btn-primary"
+          onClick={handleGenerate}
+          disabled={generating}
+        >
+          {generating ? (
+            <Loader size={15} className="spin" />
+          ) : (
+            <Wand2 size={15} />
+          )}
           Générer un post
         </button>
       </div>
@@ -95,12 +120,22 @@ export default function PostsPage() {
       {posts.length === 0 ? (
         <div className="empty card">
           <p>Aucun post pour l'instant.</p>
-          <button className="btn btn-primary btn-sm" onClick={handleGenerate} style={{ marginTop: 12 }}>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={handleGenerate}
+            style={{ marginTop: 12 }}
+          >
             <Wand2 size={13} /> Générer le premier
           </button>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: 14,
+          }}
+        >
           {posts.map((post) => (
             <div className="post-card" key={post._id}>
               {post.imageUrl && (
@@ -108,7 +143,9 @@ export default function PostsPage() {
               )}
               <div className="post-card-body">
                 {editingId === post._id ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                  >
                     <textarea
                       className="textarea"
                       value={editText}
@@ -116,10 +153,16 @@ export default function PostsPage() {
                       rows={3}
                     />
                     <div style={{ display: "flex", gap: 6 }}>
-                      <button className="btn btn-primary btn-sm" onClick={() => saveEdit(post._id)}>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => saveEdit(post._id)}
+                      >
                         <Check size={13} /> Sauvegarder
                       </button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setEditingId(null)}
+                      >
                         <X size={13} />
                       </button>
                     </div>
@@ -129,7 +172,9 @@ export default function PostsPage() {
                 )}
 
                 <div className="post-card-meta">
-                  <span className={`badge ${statusBadge[post.status]}`}>{statusLabel[post.status]}</span>
+                  <span className={`badge ${statusBadge[post.status]}`}>
+                    {statusLabel[post.status]}
+                  </span>
                   <span>
                     {post.scheduledAt
                       ? format(new Date(post.scheduledAt), "dd/MM HH:mm")
@@ -138,21 +183,32 @@ export default function PostsPage() {
                 </div>
 
                 {post.theme && (
-                  <span style={{ fontSize: 11, color: "var(--muted)" }}>📌 {post.theme}</span>
+                  <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                    📌 {post.theme}
+                  </span>
                 )}
 
                 <div className="post-card-actions">
                   {post.status !== "published" && (
-                    <button className="btn btn-primary btn-sm" onClick={() => handlePublish(post._id)}>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handlePublish(post._id)}
+                    >
                       <Send size={12} /> Publier
                     </button>
                   )}
                   {editingId !== post._id && (
-                    <button className="btn btn-ghost btn-sm" onClick={() => startEdit(post)}>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => startEdit(post)}
+                    >
                       <Edit2 size={12} /> Éditer
                     </button>
                   )}
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(post._id)}>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleDelete(post._id)}
+                  >
                     <Trash2 size={12} />
                   </button>
                 </div>
