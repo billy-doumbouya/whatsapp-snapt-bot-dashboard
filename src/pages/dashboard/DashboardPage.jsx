@@ -1,13 +1,33 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CheckCircle, Clock, AlertCircle, FileText, Loader, Wand2, Send } from "lucide-react";
+import {
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  FileText,
+  Loader,
+  Wand2,
+  Send,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../services/api.js";
 import { useSocket } from "../../hooks/useSocket.js";
 
-const statusLabel = { published: "Publié", scheduled: "Schedulé", draft: "Brouillon", failed: "Échoué" };
-const statusBadge = { published: "badge-green", scheduled: "badge-blue", draft: "badge-gray", failed: "badge-red" };
+const statusLabel = {
+  published: "Publié",
+  scheduled: "Schedulé",
+  publishing: "Publication en cours...",
+  draft: "Brouillon",
+  failed: "Échoué",
+};
+const statusBadge = {
+  published: "badge-green",
+  scheduled: "badge-blue",
+  publishing: "badge-blue",
+  draft: "badge-gray",
+  failed: "badge-red",
+};
 
 export default function DashboardPage() {
   const [todayPost, setTodayPost] = useState(null);
@@ -20,13 +40,17 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
-      const [todayRes, postsRes, logsRes] = await Promise.all([
-        api.get("/posts/today"),
-        api.get("/posts?limit=100"),
+      const [postsRes, logsRes] = await Promise.all([
+        api.get("/status?limit=100"),
         api.get("/logs?limit=8"),
       ]);
-      setTodayPost(todayRes.data.post);
-      const posts = postsRes.data.posts;
+      const posts = postsRes.data.posts || [];
+      const todayKey = format(new Date(), "yyyy-MM-dd");
+      const todayPostCandidate = posts.find((post) => {
+        const baseDate = post.scheduledAt || post.createdAt;
+        return baseDate && format(new Date(baseDate), "yyyy-MM-dd") === todayKey;
+      });
+      setTodayPost(todayPostCandidate || null);
       setStats({
         total: posts.length,
         published: posts.filter((p) => p.status === "published").length,
@@ -41,12 +65,14 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const { data } = await api.post("/posts/generate");
+      const { data } = await api.post("/status/generate");
       setTodayPost(data.post);
       toast.success("Post généré avec succès !");
       loadData();
@@ -61,36 +87,63 @@ export default function DashboardPage() {
     if (!todayPost) return;
     setPublishing(true);
     try {
-      await api.post(`/posts/${todayPost._id}/publish`);
+      await api.post(`/status/${todayPost._id}/publish`);
       toast.success("Statut publié !");
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.error || "Publication échouée");
+      loadData(); // ← ajouté : rafraîchit aussi en cas d'échec pour voir le badge "Échoué" à jour
     } finally {
       setPublishing(false);
     }
   };
 
-  if (loading) return <div className="empty"><Loader size={24} className="spin" /><p>Chargement…</p></div>;
+  if (loading)
+    return (
+      <div className="empty">
+        <Loader size={24} className="spin" />
+        <p>Chargement…</p>
+      </div>
+    );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <div className="page-header">
         <div>
           <h1 className="page-title">Dashboard</h1>
-          <p className="page-sub">{format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}</p>
+          <p className="page-sub">
+            {format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}
+          </p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
-          <button className="btn btn-ghost" onClick={handleGenerate} disabled={generating}>
-            {generating ? <Loader size={15} className="spin" /> : <Wand2 size={15} />}
+          <button
+            className="btn btn-ghost"
+            onClick={handleGenerate}
+            disabled={generating}
+          >
+            {generating ? (
+              <Loader size={15} className="spin" />
+            ) : (
+              <Wand2 size={15} />
+            )}
             Générer un post
           </button>
           <button
             className="btn btn-primary"
             onClick={handlePublish}
-            disabled={publishing || !todayPost || waStatus !== "connected"}
+            disabled={
+              publishing ||
+              !todayPost ||
+              waStatus !== "connected" ||
+              todayPost?.status === "published" ||
+              todayPost?.status === "publishing"
+            }
           >
-            {publishing ? <Loader size={15} className="spin" /> : <Send size={15} />}
+            {publishing ? (
+              <Loader size={15} className="spin" />
+            ) : (
+              <Send size={15} />
+            )}
             Publier maintenant
           </button>
         </div>
@@ -99,17 +152,45 @@ export default function DashboardPage() {
       {/* Stats */}
       <div className="stat-grid">
         {[
-          { label: "Total posts", value: stats?.total ?? 0, icon: FileText, color: "var(--info)" },
-          { label: "Publiés", value: stats?.published ?? 0, icon: CheckCircle, color: "var(--accent)" },
-          { label: "Schedulés", value: stats?.scheduled ?? 0, icon: Clock, color: "var(--warn)" },
-          { label: "Échoués", value: stats?.failed ?? 0, icon: AlertCircle, color: "var(--danger)" },
+          {
+            label: "Total posts",
+            value: stats?.total ?? 0,
+            icon: FileText,
+            color: "var(--info)",
+          },
+          {
+            label: "Publiés",
+            value: stats?.published ?? 0,
+            icon: CheckCircle,
+            color: "var(--accent)",
+          },
+          {
+            label: "Schedulés",
+            value: stats?.scheduled ?? 0,
+            icon: Clock,
+            color: "var(--warn)",
+          },
+          {
+            label: "Échoués",
+            value: stats?.failed ?? 0,
+            icon: AlertCircle,
+            color: "var(--danger)",
+          },
         ].map(({ label, value, icon: Icon, color }) => (
           <div className="stat-card" key={label}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <span className="label">{label}</span>
               <Icon size={16} style={{ color }} />
             </div>
-            <div className="value" style={{ color }}>{value}</div>
+            <div className="value" style={{ color }}>
+              {value}
+            </div>
           </div>
         ))}
       </div>
@@ -121,10 +202,25 @@ export default function DashboardPage() {
           {todayPost ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {todayPost.imageUrl && (
-                <img src={todayPost.imageUrl} alt="statut" style={{ borderRadius: 8, width: "100%", height: 140, objectFit: "cover" }} />
+                <img
+                  src={todayPost.imageUrl}
+                  alt="statut"
+                  style={{
+                    borderRadius: 8,
+                    width: "100%",
+                    height: 140,
+                    objectFit: "cover",
+                  }}
+                />
               )}
               <p style={{ fontSize: 14, lineHeight: 1.6 }}>{todayPost.text}</p>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <span className={`badge ${statusBadge[todayPost.status]}`}>
                   {statusLabel[todayPost.status]}
                 </span>
@@ -135,14 +231,24 @@ export default function DashboardPage() {
                 )}
               </div>
               {todayPost.theme && (
-                <span style={{ fontSize: 11, color: "var(--muted)" }}>Thème : {todayPost.theme}</span>
+                <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                  Thème : {todayPost.theme}
+                </span>
               )}
             </div>
           ) : (
             <div className="empty" style={{ padding: 24 }}>
               <p style={{ marginBottom: 12 }}>Aucun post pour aujourd'hui</p>
-              <button className="btn btn-primary btn-sm" onClick={handleGenerate} disabled={generating}>
-                {generating ? <Loader size={13} className="spin" /> : <Wand2 size={13} />}
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={handleGenerate}
+                disabled={generating}
+              >
+                {generating ? (
+                  <Loader size={13} className="spin" />
+                ) : (
+                  <Wand2 size={13} />
+                )}
                 Générer
               </button>
             </div>
@@ -153,14 +259,22 @@ export default function DashboardPage() {
         <div className="card">
           <div className="card-title">Activité récente</div>
           {recentLogs.length === 0 ? (
-            <div className="empty" style={{ padding: 16 }}>Aucune activité</div>
+            <div className="empty" style={{ padding: 16 }}>
+              Aucune activité
+            </div>
           ) : (
             recentLogs.map((log) => (
               <div className="log-item" key={log._id}>
                 <div className={`log-dot ${log.type}`} />
                 <div style={{ flex: 1 }}>
                   <div>{log.message}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--muted)",
+                      marginTop: 2,
+                    }}
+                  >
                     {format(new Date(log.createdAt), "HH:mm")}
                   </div>
                 </div>

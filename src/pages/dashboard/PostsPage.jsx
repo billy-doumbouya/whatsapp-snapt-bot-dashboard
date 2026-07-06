@@ -7,12 +7,14 @@ import api from "../../services/api.js";
 const statusBadge = {
   published: "badge-green",
   scheduled: "badge-blue",
+  publishing: "badge-blue", // ← ajouté
   draft: "badge-gray",
   failed: "badge-red",
 };
 const statusLabel = {
   published: "Publié",
   scheduled: "Schedulé",
+  publishing: "Publication en cours...", // ← ajouté
   draft: "Brouillon",
   failed: "Échoué",
 };
@@ -21,12 +23,13 @@ export default function PostsPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [publishingId, setPublishingId] = useState(null); // ← ajouté
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
 
   const load = async () => {
     try {
-      const { data } = await api.get("/posts?limit=50");
+      const { data } = await api.get("/status?limit=50");
       setPosts(data.posts);
     } catch {
       toast.error("Erreur chargement posts");
@@ -42,7 +45,7 @@ export default function PostsPage() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      await api.post("/posts/generate");
+      await api.post("/status/generate");
       toast.success("Post généré !");
       load();
     } catch (err) {
@@ -53,19 +56,24 @@ export default function PostsPage() {
   };
 
   const handlePublish = async (id) => {
+    if (publishingId) return; // ← ignore tout clic si une publication est déjà en cours (ce post ou un autre)
+    setPublishingId(id);
     try {
-      await api.post(`/posts/${id}/publish`);
+      await api.post(`/status/${id}/publish`);
       toast.success("Publié sur WhatsApp !");
       load();
     } catch (err) {
       toast.error(err.response?.data?.error || "Échec de publication");
+      load(); // ← recharge aussi en cas d'échec pour refléter le statut "failed" mis à jour côté backend
+    } finally {
+      setPublishingId(null);
     }
   };
 
   const handleDelete = async (id) => {
     if (!confirm("Supprimer ce post ?")) return;
     try {
-      await api.delete(`/posts/${id}`);
+      await api.delete(`/status/${id}`);
       setPosts((p) => p.filter((post) => post._id !== id));
       toast.success("Post supprimé");
     } catch {
@@ -80,7 +88,7 @@ export default function PostsPage() {
 
   const saveEdit = async (id) => {
     try {
-      const { data } = await api.patch(`/posts/${id}`, { text: editText });
+      const { data } = await api.patch(`/status/${id}`, { text: editText });
       setPosts((prev) => prev.map((p) => (p._id === id ? data.post : p)));
       setEditingId(null);
       toast.success("Post modifié");
@@ -193,8 +201,21 @@ export default function PostsPage() {
                     <button
                       className="btn btn-primary btn-sm"
                       onClick={() => handlePublish(post._id)}
+                      disabled={
+                        publishingId === post._id ||
+                        post.status === "publishing"
+                      }
                     >
-                      <Send size={12} /> Publier
+                      {publishingId === post._id ||
+                      post.status === "publishing" ? (
+                        <>
+                          <Loader size={12} className="spin" /> Publication...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={12} /> Publier
+                        </>
+                      )}
                     </button>
                   )}
                   {editingId !== post._id && (

@@ -25,33 +25,50 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "var(--bg)",
-      padding: 20,
-    }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--bg)",
+        padding: 20,
+      }}
+    >
       <div style={{ width: "100%", maxWidth: 380 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{
-            width: 48, height: 48,
-            background: "var(--accent)",
-            borderRadius: 14,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            margin: "0 auto 14px",
-          }}>
-            <Zap size={22} color="#000" />
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              background: "var(--accent)",
+              borderRadius: 14,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 14px",
+            }}
+          >
+            <img
+              src="/logo.png"
+              alt="logo"
+              className="logo"
+              style={{ width: 24, height: 24 }}
+            />
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.4 }}>StatusBot</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.4 }}>
+            StatusBot
+          </h1>
           <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 6 }}>
             Connectez-vous à votre espace
           </p>
         </div>
 
         <div className="card">
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: 16 }}
+          >
             <div className="field">
               <label>Email</label>
               <input
@@ -75,7 +92,12 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: "100%", justifyContent: "center", marginTop: 4 }}>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={loading}
+              style={{ width: "100%", justifyContent: "center", marginTop: 4 }}
+            >
               {loading ? <Loader size={15} className="spin" /> : null}
               {loading ? "Connexion…" : "Se connecter"}
             </button>

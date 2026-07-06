@@ -8,7 +8,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "user" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", businessName: "", role: "user" });
   const [creating, setCreating] = useState(false);
 
   const load = async () => {
@@ -52,10 +52,13 @@ export default function AdminPage() {
     }
     setCreating(true);
     try {
-      const { data } = await api.post("/auth/register", form);
+      const { data } = await api.post("/admin/users", {
+        ...form,
+        businessName: form.businessName || form.name,
+      });
       setUsers((prev) => [data.user, ...prev]);
       setShowForm(false);
-      setForm({ name: "", email: "", password: "", role: "user" });
+      setForm({ name: "", email: "", password: "", businessName: "", role: "user" });
       toast.success("Utilisateur créé");
     } catch (err) {
       toast.error(err.response?.data?.error || "Création échouée");
@@ -96,6 +99,10 @@ export default function AdminPage() {
             <div className="field">
               <label>Mot de passe</label>
               <input className="input" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
+            </div>
+            <div className="field">
+              <label>Entreprise</label>
+              <input className="input" value={form.businessName} onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))} placeholder="Nom de l'entreprise" />
             </div>
             <div className="field">
               <label>Rôle</label>

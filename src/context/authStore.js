@@ -42,4 +42,16 @@ export const useAuthStore = create((set, get) => ({
       set({ user: null, token: null, loading: false });
     }
   },
+
+  updateSettings: async (updates) => {
+    set({ loading: true });
+    try {
+      const { data } = await api.patch("/auth/settings", updates);
+      set((state) => ({ user: { ...state.user, ...data.user }, loading: false }));
+      return data.user;
+    } catch (error) {
+      set({ loading: false });
+      throw error;
+    }
+  },
 }));
