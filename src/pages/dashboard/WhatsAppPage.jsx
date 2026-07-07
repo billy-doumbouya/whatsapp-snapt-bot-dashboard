@@ -289,7 +289,7 @@ export default function WhatsAppPage() {
         </ol>
         <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 10 }}>
           💡 Astuce : vous pouvez aussi mettre le bot en pause ou le réactiver
-          en vous envoyant "stop" ou "start" à vous-même sur WhatsApp.
+          en vous envoyant "!stop" ou "!start" à vous-même sur WhatsApp.
         </p>
       </div>
     </div>

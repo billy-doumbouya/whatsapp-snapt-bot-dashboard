@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -28,9 +29,14 @@ export default function Layout() {
   const { user, logout } = useAuthStore();
   const { waStatus } = useSocket();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleToggleSidebar = () => setSidebarOpen((state) => !state);
+  const handleCloseSidebar = () => setSidebarOpen(false);
 
   const handleLogout = () => {
     logout();
+    handleCloseSidebar();
     navigate("/login");
   };
 
@@ -43,14 +49,28 @@ export default function Layout() {
   ];
 
   return (
-    <div className="layout">
-      <aside className="sidebar">
+    <div className={`layout ${sidebarOpen ? "sidebar-open" : ""}`}>
+      <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-logo">
           <div className="dot ">
             {/* <Zap size={14} /> */}
             <img src="/logo.png" alt="logo" className="logo" />
           </div>
           <span>StatusBot</span>
+        </div>
+
+        <div className="sidebar-mobile-bar">
+          <button
+            type="button"
+            onClick={handleCloseSidebar}
+            className="hamburger-btn close"
+            aria-label="Fermer le menu"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 6l12 12" />
+              <path d="M18 6L6 18" />
+            </svg>
+          </button>
         </div>
 
         <nav className="sidebar-nav">
@@ -60,6 +80,7 @@ export default function Layout() {
               key={to}
               to={to}
               end={end}
+              onClick={handleCloseSidebar}
               className={({ isActive }) =>
                 `nav-link ${isActive ? "active" : ""}`
               }
@@ -74,6 +95,7 @@ export default function Layout() {
               <div className="nav-section">Admin</div>
               <NavLink
                 to="/admin"
+                onClick={handleCloseSidebar}
                 className={({ isActive }) =>
                   `nav-link ${isActive ? "active" : ""}`
                 }
@@ -112,7 +134,27 @@ export default function Layout() {
         </div>
       </aside>
 
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? "open" : ""}`}
+        onClick={handleCloseSidebar}
+      />
+
       <main className="main">
+        <div className="mobile-header">
+          <button
+            type="button"
+            onClick={handleToggleSidebar}
+            className="hamburger-btn"
+            aria-label="Ouvrir le menu"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M4 7h16" />
+              <path d="M4 12h16" />
+              <path d="M4 17h16" />
+            </svg>
+          </button>
+          <span className="mobile-brand">StatusBot</span>
+        </div>
         <Outlet />
       </main>
     </div>
