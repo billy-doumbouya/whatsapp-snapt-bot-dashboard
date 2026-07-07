@@ -8,7 +8,13 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", businessName: "", role: "user" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    businessName: "",
+    role: "user",
+  });
   const [creating, setCreating] = useState(false);
 
   const load = async () => {
@@ -22,7 +28,9 @@ export default function AdminPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleToggle = async (id) => {
     try {
@@ -58,7 +66,13 @@ export default function AdminPage() {
       });
       setUsers((prev) => [data.user, ...prev]);
       setShowForm(false);
-      setForm({ name: "", email: "", password: "", businessName: "", role: "user" });
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        businessName: "",
+        role: "user",
+      });
       toast.success("Utilisateur créé");
     } catch (err) {
       toast.error(err.response?.data?.error || "Création échouée");
@@ -67,7 +81,12 @@ export default function AdminPage() {
     }
   };
 
-  if (loading) return <div className="empty"><Loader size={24} className="spin" /></div>;
+  if (loading)
+    return (
+      <div className="empty">
+        <Loader size={24} className="spin" />
+      </div>
+    );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -82,38 +101,98 @@ export default function AdminPage() {
       </div>
 
       {showForm && (
-        <div className="card" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div
+          className="card"
+          style={{ display: "flex", flexDirection: "column", gap: 14 }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <span style={{ fontWeight: 600 }}>Nouvel utilisateur</span>
-            <button className="btn btn-ghost btn-sm" onClick={() => setShowForm(false)}><X size={14} /></button>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowForm(false)}
+            >
+              <X size={14} />
+            </button>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
             <div className="field">
               <label>Nom</label>
-              <input className="input" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nom complet" />
+              <input
+                className="input"
+                value={form.name}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
+                placeholder="Nom complet"
+              />
             </div>
             <div className="field">
               <label>Email</label>
-              <input className="input" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="email@exemple.com" />
+              <input
+                className="input"
+                type="email"
+                value={form.email}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, email: e.target.value }))
+                }
+                placeholder="email@exemple.com"
+              />
             </div>
             <div className="field">
               <label>Mot de passe</label>
-              <input className="input" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
+              <input
+                className="input"
+                type="password"
+                value={form.password}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, password: e.target.value }))
+                }
+                placeholder="••••••••"
+              />
             </div>
             <div className="field">
               <label>Entreprise</label>
-              <input className="input" value={form.businessName} onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))} placeholder="Nom de l'entreprise" />
+              <input
+                className="input"
+                value={form.businessName}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, businessName: e.target.value }))
+                }
+                placeholder="Nom de l'entreprise"
+              />
             </div>
             <div className="field">
               <label>Rôle</label>
-              <select className="select" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
+              <select
+                className="select"
+                value={form.role}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, role: e.target.value }))
+                }
+              >
                 <option value="user">Utilisateur</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
           </div>
-          <button className="btn btn-primary" onClick={handleCreate} disabled={creating}>
-            {creating ? <Loader size={14} className="spin" /> : <Plus size={14} />}
+          <button
+            className="btn btn-primary"
+            onClick={handleCreate}
+            disabled={creating}
+          >
+            {creating ? (
+              <Loader size={14} className="spin" />
+            ) : (
+              <Plus size={14} />
+            )}
             Créer le compte
           </button>
         </div>
@@ -138,12 +217,16 @@ export default function AdminPage() {
                   <td style={{ fontWeight: 500 }}>{u.name}</td>
                   <td style={{ color: "var(--muted)" }}>{u.email}</td>
                   <td>
-                    <span className={`badge ${u.role === "admin" ? "badge-blue" : "badge-gray"}`}>
+                    <span
+                      className={`badge ${u.role === "admin" ? "badge-blue" : "badge-gray"}`}
+                    >
                       {u.role}
                     </span>
                   </td>
                   <td>
-                    <span className={`badge ${u.isActive ? "badge-green" : "badge-red"}`}>
+                    <span
+                      className={`badge ${u.isActive ? "badge-green" : "badge-red"}`}
+                    >
                       {u.isActive ? "Actif" : "Désactivé"}
                     </span>
                   </td>
@@ -157,7 +240,11 @@ export default function AdminPage() {
                         onClick={() => handleToggle(u._id)}
                         title={u.isActive ? "Désactiver" : "Activer"}
                       >
-                        {u.isActive ? <UserX size={13} /> : <UserCheck size={13} />}
+                        {u.isActive ? (
+                          <UserX size={13} />
+                        ) : (
+                          <UserCheck size={13} />
+                        )}
                       </button>
                       <button
                         className="btn btn-danger btn-sm"
