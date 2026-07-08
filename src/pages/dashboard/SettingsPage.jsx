@@ -3,7 +3,7 @@ import { Save, Loader, Plus, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../../context/authStore.js";
 import api from "../../services/api.js";
-import PromptTemplateEditor from "../../ui/PromptTemplateEditor .jsx";
+import PromptTemplateEditor from "../../ui/PromptTemplateEditor.jsx";
 
 export default function SettingsPage() {
   const { user, updateSettings } = useAuthStore();
