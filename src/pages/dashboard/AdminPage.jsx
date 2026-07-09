@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Plus, Loader, UserCheck, UserX, Trash2, X } from "lucide-react";
+import { Plus, Loader, UserCheck, UserX, Trash2, X, Mail } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../services/api.js";
 
@@ -11,11 +11,11 @@ export default function AdminPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    password: "",
     businessName: "",
     role: "user",
   });
   const [creating, setCreating] = useState(false);
+  const [resendingId, setResendingId] = useState(null);
 
   const load = async () => {
     try {
@@ -54,8 +54,8 @@ export default function AdminPage() {
   };
 
   const handleCreate = async () => {
-    if (!form.name || !form.email || !form.password) {
-      toast.error("Tous les champs sont requis");
+    if (!form.name || !form.email) {
+      toast.error("Nom et email sont requis");
       return;
     }
     setCreating(true);
@@ -66,18 +66,47 @@ export default function AdminPage() {
       });
       setUsers((prev) => [data.user, ...prev]);
       setShowForm(false);
-      setForm({
-        name: "",
-        email: "",
-        password: "",
-        businessName: "",
-        role: "user",
-      });
-      toast.success("Utilisateur créé");
+      setForm({ name: "", email: "", businessName: "", role: "user" });
+
+      if (data.warning) {
+        // Email d'identifiants non envoyé : le mot de passe temporaire est
+        // renvoyé dans la réponse, seule façon de le communiquer manuellement.
+        toast.error(data.warning, { duration: 8000 });
+        if (data.tempPassword) {
+          toast(
+            `Mot de passe temporaire à transmettre manuellement : ${data.tempPassword}`,
+            { duration: 15000 },
+          );
+        }
+      } else {
+        toast.success("Utilisateur créé, identifiants envoyés par email");
+      }
     } catch (err) {
       toast.error(err.response?.data?.error || "Création échouée");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleResendCredentials = async (id) => {
+    setResendingId(id);
+    try {
+      const { data } = await api.post(`/admin/users/${id}/resend-credentials`);
+      if (data.warning) {
+        toast.error(data.warning, { duration: 8000 });
+        if (data.tempPassword) {
+          toast(
+            `Mot de passe temporaire à transmettre manuellement : ${data.tempPassword}`,
+            { duration: 15000 },
+          );
+        }
+      } else {
+        toast.success("Identifiants renvoyés par email");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Renvoi échoué");
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -120,6 +149,12 @@ export default function AdminPage() {
               <X size={14} />
             </button>
           </div>
+
+          <p style={{ fontSize: 12, color: "var(--muted)" }}>
+            Un mot de passe temporaire est généré automatiquement et envoyé par
+            email à l'utilisateur — aucun mot de passe à saisir ici.
+          </p>
+
           <div
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
           >
@@ -144,18 +179,6 @@ export default function AdminPage() {
                   setForm((f) => ({ ...f, email: e.target.value }))
                 }
                 placeholder="email@exemple.com"
-              />
-            </div>
-            <div className="field">
-              <label>Mot de passe</label>
-              <input
-                className="input"
-                type="password"
-                value={form.password}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, password: e.target.value }))
-                }
-                placeholder="••••••••"
               />
             </div>
             <div className="field">
@@ -235,6 +258,18 @@ export default function AdminPage() {
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: 6 }}>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => handleResendCredentials(u._id)}
+                        disabled={resendingId === u._id}
+                        title="Renvoyer les identifiants par email"
+                      >
+                        {resendingId === u._id ? (
+                          <Loader size={13} className="spin" />
+                        ) : (
+                          <Mail size={13} />
+                        )}
+                      </button>
                       <button
                         className={`btn btn-sm ${u.isActive ? "btn-ghost" : "btn-primary"}`}
                         onClick={() => handleToggle(u._id)}
